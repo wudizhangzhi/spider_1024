@@ -133,7 +133,7 @@ class CaoLiu(object):
         找到番号
         :return:
         '''
-        m = re.findall(r'\][- ]*([a-zA-X0-9\-]+)', title)
+        m = re.findall(r'\][- ]*([a-zA-Z0-9\-]+)', title)
         if m:
             return m[0].upper()
         else:
