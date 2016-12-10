@@ -69,6 +69,7 @@ USER_AGENTS = [
     "Mozilla/5.0 (X11; U; Linux x86_64; zh-CN; rv:1.9.2.10) Gecko/20100922 Ubuntu/10.10 (maverick) Firefox/3.6.10"
 ]
 
+
 def catchKeyboardInterrupt(fn):
     def wrapper(*args, **kwargs):
         try:
@@ -78,6 +79,7 @@ def catchKeyboardInterrupt(fn):
             logging.debug('[*] 强制退出程序')
 
     return wrapper
+
 
 class CaoLiu(object):
     '''
@@ -183,7 +185,7 @@ class CaoLiu(object):
     def scrapylist_onepage(self, url):
         try:
             r = self._get(url)
-        except Exception,e:
+        except Exception, e:
             print e
             return False
         r.encoding = 'gbk'
@@ -212,7 +214,7 @@ class CaoLiu(object):
                         print '保存过,title:%s' % title
                     else:
                         self.save_list(title, href, fanhao, size, caption)
-            except Exception,e:
+            except Exception, e:
                 print e
 
     def thread_scrapylist(self):
@@ -228,17 +230,20 @@ class CaoLiu(object):
         '''
         # 取任务
         while True:
-            sql = 'select * from caoliu_source where `hash` is NULL limit 1'
-            ret = self.mysql_cursor.query(sql)
-            if not ret:
-                print '没有任务'
-            else:
-                if self.DEBUG:
-                    print '开始任务：%s' % ret[0]
-                try:
-                    self.scrapycode(ret[0]['url'])
-                except Exception, e:
-                    print e
+            try:
+                sql = 'select * from caoliu_source where `hash` is NULL limit 1'
+                ret = self.mysql_cursor.query(sql)
+                if not ret:
+                    print '没有任务'
+                else:
+                    if self.DEBUG:
+                        print '开始任务：%s' % ret[0]
+                    try:
+                        self.scrapycode(ret[0]['url'])
+                    except Exception, e:
+                        print e
+            except Exception, e:
+                print e
             time.sleep(5)
 
     def scrapycode(self, url):
