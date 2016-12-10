@@ -98,7 +98,7 @@ class CaoLiu(object):
         self._initDB()
 
     def _initDB(self):
-        self.mysql_cursor = torndb.Connection(host='localhost', user='root', password='13961000804', database='caoliu')
+        self.mysql_cursor = torndb.Connection(host='localhost', user='root', password='admin', database='caoliu')
 
     def _get(self, url, headers=None, data=None, proxy=None):
         _headers = self.headers
@@ -221,7 +221,7 @@ class CaoLiu(object):
         '''
         # 取任务
         while True:
-            sql = 'select * from caoliu_source where `code` is NULL limit 1'
+            sql = 'select * from caoliu_source where `hash` is NULL limit 1'
             ret = self.mysql_cursor.query(sql)
             if not ret:
                 print '没有任务'
@@ -273,8 +273,8 @@ class CaoLiu(object):
         #     listenProcess.start()
         listenProcess = multiprocessing.Process(target=self.thread_scrapylist)
         listenProcess.start()
-        # listenProcess = multiprocessing.Process(target=self.thread_scrapycodeauto)
-        # listenProcess.start()
+        listenProcess = multiprocessing.Process(target=self.thread_scrapycodeauto)
+        listenProcess.start()
         while True:
             time.sleep(3)
         # TODO
