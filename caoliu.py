@@ -181,32 +181,39 @@ class CaoLiu(object):
             print e
 
     def scrapylist_onepage(self, url):
-        r = self._get(url)
+        try:
+            r = self._get(url)
+        except Exception,e:
+            print e
+            return False
         r.encoding = 'gbk'
         root = etree.HTML(r.text)
         lines = root.xpath('//h3/a[starts-with(@href, "htm_data")]')
         for line in lines:
-            title = line.xpath('./text()')  # 标题
-            href = line.xpath('./@href')  # 内容页面链接
-            if title and href:
-                title = title[0]
-                href = href[0]
-                # 根据标题获取大小，番号，题目，是否有中文字幕
-                size = self.findsize(title)
-                if size:
-                    size = caoliu.formatsize(size)
-                fanhao = self.findfanhao(title)
-                caption = self.findcaption(title)
-                href = 'http://www.t66y.com/' + href
-                print title
-                print fanhao, size, caption, href
-                # 判断是否保存过
-                sql = 'select * from caoliu_source where `code`=%s'
-                ret = self.mysql_cursor.query(sql, fanhao)
-                if ret:
-                    print '保存过,title:%s' % title
-                else:
-                    self.save_list(title, href, fanhao, size, caption)
+            try:
+                title = line.xpath('./text()')  # 标题
+                href = line.xpath('./@href')  # 内容页面链接
+                if title and href:
+                    title = title[0]
+                    href = href[0]
+                    # 根据标题获取大小，番号，题目，是否有中文字幕
+                    size = self.findsize(title)
+                    if size:
+                        size = caoliu.formatsize(size)
+                    fanhao = self.findfanhao(title)
+                    caption = self.findcaption(title)
+                    href = 'http://www.t66y.com/' + href
+                    print title
+                    print fanhao, size, caption, href
+                    # 判断是否保存过
+                    sql = 'select * from caoliu_source where `code`=%s'
+                    ret = self.mysql_cursor.query(sql, fanhao)
+                    if ret:
+                        print '保存过,title:%s' % title
+                    else:
+                        self.save_list(title, href, fanhao, size, caption)
+            except Exception,e:
+                print e
 
     def thread_scrapylist(self):
         url = 'http://www.t66y.com/thread0806.php?fid=15&search=&page=%s'
