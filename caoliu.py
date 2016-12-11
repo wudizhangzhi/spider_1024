@@ -11,6 +11,7 @@ import torndb
 from random import choice
 from base64 import b64encode
 from lxml import etree
+import os
 import re
 import logging
 import chardet
@@ -292,8 +293,11 @@ class CaoLiu(object):
         '''
         try:
             url = self.downloadlink(hash)
+            filepath = 'torrent'
+            if not os.path.exists(filepath):
+                os.mkdir(filepath)
             r = requests.get(url, stream=True)
-            with open('%s.torrent' % hash, 'wb') as f:
+            with open(os.path.join(filepath, '%s.torrent' % hash), 'wb') as f:
                 for content in r.iter_content(1024):
                     f.write(content)
                     f.flush()
