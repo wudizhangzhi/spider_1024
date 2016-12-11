@@ -153,6 +153,23 @@ class CaoLiu(object):
         else:
             return 0
 
+    def findimg(self, code, url):
+        '''
+        找图片
+        :param hash:
+        :param url:
+        :return:
+        '''
+        try:
+            r = self._get(url)
+            r.encoding = 'gbk'
+            m = re.findall(r'', r.text)
+
+
+        except Exception,e:
+            print e
+
+
     @classmethod
     def formatsize(cls, size):
         '''
@@ -312,7 +329,7 @@ class CaoLiu(object):
     def thread_download(self):
         #获取任务
         while True:
-            sql = 'select * from caoliu_source where `isdownload`=0 limit 5'
+            sql = 'select * from caoliu_source where `isdownload`=0 and `hash` is not NULL limit 5'
             ret = self.mysql_cursor.query(sql)
             if not ret:
                 time.sleep(10)
@@ -331,10 +348,6 @@ class CaoLiu(object):
         for i in threads.itervalues():
             listenProcess = multiprocessing.Process(target=i)
             listenProcess.start()
-        # listenProcess = multiprocessing.Process(target=self.thread_scrapylist)
-        # listenProcess.start()
-        # listenProcess = multiprocessing.Process(target=self.thread_scrapycodeauto)
-        # listenProcess.start()
         while True:
             time.sleep(3)
         # TODO
