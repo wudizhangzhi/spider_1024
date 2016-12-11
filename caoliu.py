@@ -139,7 +139,10 @@ class CaoLiu(object):
         '''
         m = re.findall(r'\][- ]*([a-zA-Z0-9\-]+)', title)
         if m:
-            return m[0].upper()
+            if m[0].isdigit():
+                return False
+            else:
+                return m[0].upper()
         else:
             return False
 
@@ -153,7 +156,7 @@ class CaoLiu(object):
         else:
             return 0
 
-    def findimg(self, code, url):
+    def findimg(self, url):
         '''
         找图片
         :param hash:
@@ -163,8 +166,8 @@ class CaoLiu(object):
         try:
             r = self._get(url)
             r.encoding = 'gbk'
-            m = re.findall(r'', r.text)
-
+            pattern = r'src=\'([^\']+\.(jpg|png))\''
+            m = re.findall(pattern, r.text)
 
         except Exception,e:
             print e
@@ -227,8 +230,8 @@ class CaoLiu(object):
                     print title
                     print fanhao, size, caption, href
                     # 判断是否保存过
-                    sql = 'select * from caoliu_source where `code`=%s'
-                    ret = self.mysql_cursor.query(sql, fanhao)
+                    sql = 'select * from caoliu_source where `url`=%s'
+                    ret = self.mysql_cursor.query(sql, url)
                     if ret:
                         print '保存过,title:%s' % title
                     else:
