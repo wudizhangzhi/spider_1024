@@ -231,7 +231,7 @@ class CaoLiu(object):
                     print fanhao, size, caption, href
                     # 判断是否保存过
                     sql = 'select * from caoliu_source where `url`=%s'
-                    ret = self.mysql_cursor.query(sql, url)
+                    ret = self.mysql_cursor.query(sql, href)
                     if ret:
                         print '保存过,title:%s' % title
                     else:
