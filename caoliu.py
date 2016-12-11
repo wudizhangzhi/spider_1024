@@ -319,6 +319,7 @@ class CaoLiu(object):
             else:
                 for i in ret:
                     self.download(i['hash'])
+                    time.sleep(1)
 
     @catchKeyboardInterrupt
     def run(self):
