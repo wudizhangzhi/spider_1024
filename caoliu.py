@@ -9,6 +9,7 @@ import requests
 import multiprocessing
 import torndb
 from random import choice
+from base64 import b64encode
 from lxml import etree
 import re
 import logging
@@ -95,7 +96,7 @@ class CaoLiu(object):
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
             'Accept-Language': 'en-US,en;q=0.5',
             'Connection': 'keep-alive',
-            'Accept-Encoding': 'gzip, deflate'
+            # 'Accept-Encoding': 'gzip, deflate'
         }
         self._initDB()
 
@@ -273,20 +274,62 @@ class CaoLiu(object):
             except Exception, e:
                 print e
 
+    @classmethod
+    def downloadlink(cls, hash):
+        '''
+        获取实时种子下载链接
+        :param hash:
+        :return:
+        '''
+        return 'http://www.rmdown.com/download.php?ref=%s&reff=%s&submit=download' % (
+        hash, b64encode(str(int(time.time()))))
+
+    def download(self, hash):
+        '''
+        下载种子
+        :param hash:
+        :return:
+        '''
+        try:
+            url = self.downloadlink(hash)
+            r = requests.get(url, stream=True)
+            with open('%s.torrent' % hash, 'wb') as f:
+                for content in r.iter_content(1024):
+                    f.write(content)
+                    f.flush()
+            #成功后更新数据库
+            sql = 'update caoliu_source set `isdownload`=1 where `hash`=%s'
+            self.mysql_cursor.execute(sql, hash)
+            if self.DEBUG:
+                print '下载完成:%s' % hash
+        except Exception, e:
+            print e
+
+    def thread_download(self):
+        #获取任务
+        while True:
+            sql = 'select * from caoliu_source where `isdownload`=0 limit 5'
+            ret = self.mysql_cursor.query(sql)
+            if not ret:
+                time.sleep(10)
+            else:
+                for i in ret:
+                    self.download(i['hash'])
+
     @catchKeyboardInterrupt
     def run(self):
         threads = {
             'scrapylist': self.thread_scrapylist,
             'scrapycode': self.thread_scrapycodeauto,
-            # TODO 'download': self.thread_scrapylist,
+            'download_torrent': self.thread_download,
         }
-        # for i in threads.itervalues():
-        #     listenProcess = multiprocessing.Process(target=i)
-        #     listenProcess.start()
-        listenProcess = multiprocessing.Process(target=self.thread_scrapylist)
-        listenProcess.start()
-        listenProcess = multiprocessing.Process(target=self.thread_scrapycodeauto)
-        listenProcess.start()
+        for i in threads.itervalues():
+            listenProcess = multiprocessing.Process(target=i)
+            listenProcess.start()
+        # listenProcess = multiprocessing.Process(target=self.thread_scrapylist)
+        # listenProcess.start()
+        # listenProcess = multiprocessing.Process(target=self.thread_scrapycodeauto)
+        # listenProcess.start()
         while True:
             time.sleep(3)
         # TODO
