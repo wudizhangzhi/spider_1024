@@ -14,6 +14,7 @@ from lxml import etree
 import os
 import re
 import logging
+import logging.config
 import redis
 import chardet
 
@@ -415,14 +416,22 @@ class CaoLiu(object):
 
 
 if __name__ == '__main__':
+    # CONF_LOG = "caoliu.conf"
+    # logging.config.fileConfig(CONF_LOG)   # 采用配置文件
+    logging.basicConfig(level=logging.DEBUG,
+                    format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
+                    datefmt='%a, %d %b %Y %H:%M:%S',
+                    filename='log/caoliu.log',
+                    filemode='w')
     logger = logging.getLogger(__name__)
     import coloredlogs
 
     coloredlogs.install(level='DEBUG')
-    caoliu = CaoLiu()
+    logging.error('this is a test')
+    # caoliu = CaoLiu()
     # caoliu.scrapylist_onepage('http://www.t66y.com/thread0806.php?fid=15&search=&page=0')
     # print caoliu.findfanhao('[MP4/952M]JUX-343 あなたへ 今�、ゆきこの家に泊まります。 森ななこ【中文字幕】')
     # print caoliu.findcaption('[MP4/952M]JUX-343 あなたへ 今�、ゆきこの家に泊まります。 森ななこ【中文字幕】')
     # print CaoLiu.formatsize(caoliu.findsize('[MP4/952M]JUX-343 あなたへ 今�、ゆきこの家に泊まります。 森ななこ【中文字幕】'))
     # caoliu.scrapycode('http://www.t66y.com/htm_data/15/1612/2171110.html')
-    caoliu.run()
+    # caoliu.run()
