@@ -425,13 +425,13 @@ class CaoLiu(object):
                 print '没有可以下载的视频'
                 time.sleep(60)
             else:
-                #查询是否有网址
-                r = self._get(ret)
-                re.findall(r'(http\://media\.fcw\.xxx/videos/\d+/\d+/\d+/[a-z]+/[a-z]+/[a-zA-Z0-9]\.mp4)', r.text)
-                if not ret:
-                    pass
-                else:
-                    self.downloadvideo(ret[0])
+                # #查询是否有网址
+                # r = self._get(ret)
+                # re.findall(r'(http\://media\.fcw\.xxx/videos/\d+/\d+/\d+/[a-z]+/[a-z]+/[a-zA-Z0-9]\.mp4)', r.text)
+                # if not ret:
+                #     pass
+                # else:
+                self.downloadvideo(ret)
 
     def thread_scapyvideo_onepage(self, url):
         try:
@@ -455,7 +455,12 @@ class CaoLiu(object):
                     href = href[0]
                     href = 'http://www.t66y.com/' + href
                     # print title, href
-                    self.redis_cursor.rpush(self.pre + 'video', href)
+                    # self.redis_cursor.rpush(self.pre + 'video', href)
+                    r = self._get(url)
+                    m = re.findall(r'(http\://media\.fcw\.xxx/videos/\d+/\d+/\d+/[a-z]+/[a-z]+/[a-zA-Z0-9]\.mp4)', r.text)
+                    if m:
+                        self.redis_cursor.rpush(self.pre + 'video', m[0])
+
             except Exception, e:
                 print e
                 logging.error(e)
