@@ -451,6 +451,7 @@ class CaoLiu(object):
                 if title and href:
                     title = title[0]
                     href = href[0]
+                    href = 'http://www.t66y.com/' + href
                     print title, href
                     self.redis_cursor.rpush(self.pre + 'video', href)
             except Exception, e:
