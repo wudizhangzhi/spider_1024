@@ -427,11 +427,10 @@ if __name__ == '__main__':
     import coloredlogs
 
     coloredlogs.install(level='DEBUG')
-    logging.error('this is a test')
-    # caoliu = CaoLiu()
+    caoliu = CaoLiu()
     # caoliu.scrapylist_onepage('http://www.t66y.com/thread0806.php?fid=15&search=&page=0')
     # print caoliu.findfanhao('[MP4/952M]JUX-343 あなたへ 今�、ゆきこの家に泊まります。 森ななこ【中文字幕】')
     # print caoliu.findcaption('[MP4/952M]JUX-343 あなたへ 今�、ゆきこの家に泊まります。 森ななこ【中文字幕】')
     # print CaoLiu.formatsize(caoliu.findsize('[MP4/952M]JUX-343 あなたへ 今�、ゆきこの家に泊まります。 森ななこ【中文字幕】'))
     # caoliu.scrapycode('http://www.t66y.com/htm_data/15/1612/2171110.html')
-    # caoliu.run()
+    caoliu.run()
