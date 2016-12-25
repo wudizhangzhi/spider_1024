@@ -461,7 +461,7 @@ class CaoLiu(object):
         maxpage = 1500
         while True:
             try:
-                r = self._get('http://www.t66y.com/thread0806.php?fid=22')
+                r = self._get('http://t66y.com/thread0806.php?fid=22')
                 root = etree.HTML(r.text)
                 maxpage = root.xpath('.//div[@class="pages"]/a/input/@value')
                 if maxpage:
@@ -470,7 +470,7 @@ class CaoLiu(object):
                 print e
                 logging.error(e)
 
-            url = 'http://www.t66y.com/thread0806.php?fid=22&page=%s'
+            url = 'http://t66y.com/thread0806.php?fid=22&page=%s'
             for i in xrange(maxpage):
                 self.thread_scapyvideo_onepage(url % i)
             time.sleep(60*60)
