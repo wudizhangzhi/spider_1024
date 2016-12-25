@@ -222,6 +222,7 @@ class CaoLiu(object):
         lines = root.xpath('//h3/a[starts-with(@href, "htm_data")]')
         if not lines:
             logging.error('该列表页面找不到内容内容:%s' % url)
+            return False
         for line in lines:
             try:
                 title = line.xpath('./text()')  # 标题
