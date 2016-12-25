@@ -465,27 +465,29 @@ class CaoLiu(object):
     def thread_scapyvideo(self):
         maxpage = 1500
         while True:
-            try:
-                r = self._get('http://t66y.com/thread0806.php?fid=22')
-                root = etree.HTML(r.text)
-                maxpage = root.xpath('.//div[@class="pages"]/a/input/@value')
-                if maxpage:
-                    maxpage = int(maxpage[0].split('/')[1])
-            except Exception, e:
-                print e
-                logging.error(e)
+            #try:
+            #    r = self._get('http://t66y.com/thread0806.php?fid=22')
+            #    root = etree.HTML(r.text)
+            #    maxpage = root.xpath('.//div[@class="pages"]/a/input/@value')
+            #    if maxpage:
+            #        maxpage = int(maxpage[0].split('/')[1])
+            #except Exception, e:
+            #    print e
+            #    maxpage = 1500
+            #    logging.error(e)
 
-            url = 'http://t66y.com/thread0806.php?fid=22&page=%s'
+            url = 'http://www.t66y.com/thread0806.php?fid=22&page=%s'
             for i in xrange(maxpage):
                 self.thread_scapyvideo_onepage(url % i)
+                time.sleep(5)
             time.sleep(60*60)
 
     @catchKeyboardInterrupt
     def run(self):
         threads = {
-            'scrapylist': self.thread_scrapylist, # 爬取列表
-            'scrapycode': self.thread_scrapycodeauto, # 爬取下载的hash
-            'download_torrent': self.thread_download, # 下载种子
+            #'scrapylist': self.thread_scrapylist, # 爬取列表
+            #'scrapycode': self.thread_scrapycodeauto, # 爬取下载的hash
+            #'download_torrent': self.thread_download, # 下载种子
             'download_video': self.thread_downvideo, # 下载种子
             'scrapy_video': self.thread_scapyvideo, # 下载种子
         }
