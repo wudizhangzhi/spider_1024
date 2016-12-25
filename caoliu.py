@@ -175,6 +175,7 @@ class CaoLiu(object):
 
         except Exception, e:
             print e
+            logging.error(e)
 
     @classmethod
     def formatsize(cls, size):
@@ -206,12 +207,14 @@ class CaoLiu(object):
                 print '保存:%s' % title
         except Exception, e:
             print e
+            logging.error(e)
 
     def scrapylist_onepage(self, url):
         try:
             r = self._get(url)
         except Exception, e:
             print e
+            logging.error(e)
             return False
         r.encoding = 'gbk'
         root = etree.HTML(r.text)
@@ -241,6 +244,7 @@ class CaoLiu(object):
                         self.save_list(title, href, fanhao, size, caption)
             except Exception, e:
                 print e
+                logging.error(e)
 
     def scrapycode(self, url):
         '''
@@ -259,6 +263,7 @@ class CaoLiu(object):
                 self.mysql_cursor.execute(sql, 'none', url)
             except Exception, e:
                 print e
+                logging.error(e)
         else:
             hash = hashlist[0]
             # link = 'http://www.rmdown.com/link.php?hash=%s' % hash
@@ -268,6 +273,7 @@ class CaoLiu(object):
                 self.mysql_cursor.execute(sql, hash, url)
             except Exception, e:
                 print e
+                logging.error(e)
 
     @classmethod
     def downloadlink(cls, hash):
@@ -302,6 +308,7 @@ class CaoLiu(object):
                 print '下载完成:%s' % hash
         except Exception, e:
             print e
+            logging.error(e)
 
     def thread_download(self):
         # 获取任务
@@ -330,6 +337,7 @@ class CaoLiu(object):
                     time.sleep(10)
             except Exception, e:
                 print e
+                logging.error(e)
 
     def thread_scrapylist(self):
         '''
@@ -347,6 +355,7 @@ class CaoLiu(object):
                     maxpage = int(maxpage[0].split('/')[1])
             except Exception, e:
                 print e
+                logging.error(e)
 
             url = 'http://www.t66y.com/thread0806.php?fid=15&search=&page=%s'
             for i in xrange(maxpage):
@@ -372,8 +381,10 @@ class CaoLiu(object):
                         self.scrapycode(ret[0]['url'])
                     except Exception, e:
                         print e
+                        logging.error(e)
             except Exception, e:
                 print e
+                logging.error(e)
             time.sleep(5)
 
     def thread_downfilm(self):
@@ -386,9 +397,9 @@ class CaoLiu(object):
     @catchKeyboardInterrupt
     def run(self):
         threads = {
-            'scrapylist': self.thread_scrapylist,
-            'scrapycode': self.thread_scrapycodeauto,
-            'download_torrent': self.thread_download,
+            'scrapylist': self.thread_scrapylist, # 爬取列表
+            'scrapycode': self.thread_scrapycodeauto, # 爬取下载的hash
+            'download_torrent': self.thread_download, # 下载种子
         }
         for i in threads.itervalues():
             listenProcess = multiprocessing.Process(target=i)
