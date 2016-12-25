@@ -107,7 +107,7 @@ class CaoLiu(object):
     def _initDB(self):
         self.mysql_cursor = torndb.Connection(host='localhost', user='root', password='13961000804', database='caoliu')
         pool = redis.ConnectionPool(host='127.0.0.1', port=6379)
-        self.redis_cursor = redis.Redis(pool)
+        self.redis_cursor = redis.Redis(connection_pool=pool)
 
     def _get(self, url, headers=None, data=None, proxy=None):
         _headers = self.headers
