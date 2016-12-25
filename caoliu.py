@@ -14,6 +14,7 @@ from lxml import etree
 import os
 import re
 import logging
+import redis
 import chardet
 
 '''
@@ -90,6 +91,7 @@ class CaoLiu(object):
 
     def __init__(self):
         self.DEBUG = True
+        self.pre = 'caoliu'
         self.session = requests.Session()
         self.TIMEOUT = 5
         self.headers = {
@@ -103,6 +105,8 @@ class CaoLiu(object):
 
     def _initDB(self):
         self.mysql_cursor = torndb.Connection(host='localhost', user='root', password='admin', database='caoliu')
+        pool = redis.ConnectionPool(host='127.0.0.1', port=6379)
+        self.redis_cursor = redis.Redis(pool)
 
     def _get(self, url, headers=None, data=None, proxy=None):
         _headers = self.headers
@@ -169,9 +173,8 @@ class CaoLiu(object):
             pattern = r'src=\'([^\']+\.(jpg|png))\''
             m = re.findall(pattern, r.text)
 
-        except Exception,e:
+        except Exception, e:
             print e
-
 
     @classmethod
     def formatsize(cls, size):
@@ -239,11 +242,116 @@ class CaoLiu(object):
             except Exception, e:
                 print e
 
+    def scrapycode(self, url):
+        '''
+        爬区信息页面，获取种子和图片
+        :param url:
+        :return:
+        '''
+        r = self._get(url)
+        r.encoding = 'gbk'
+        regx = re.compile(r'hash=([0-9a-z]+)')
+        hashlist = regx.findall(r.text)
+        if not hashlist:
+            print '没有找到hash'
+            try:
+                sql = 'update caoliu_source set `hash`=%s where `url`=%s'
+                self.mysql_cursor.execute(sql, 'none', url)
+            except Exception, e:
+                print e
+        else:
+            hash = hashlist[0]
+            # link = 'http://www.rmdown.com/link.php?hash=%s' % hash
+            # 更新数据库
+            try:
+                sql = 'update caoliu_source set `hash`=%s where `url`=%s'
+                self.mysql_cursor.execute(sql, hash, url)
+            except Exception, e:
+                print e
+
+    @classmethod
+    def downloadlink(cls, hash):
+        '''
+        获取实时种子下载链接
+        :param hash:
+        :return:
+        '''
+        return 'http://www.rmdown.com/download.php?ref=%s&reff=%s&submit=download' % (
+            hash, b64encode(str(int(time.time()))))
+
+    def download(self, hash):
+        '''
+        下载种子
+        :param hash:
+        :return:
+        '''
+        try:
+            url = self.downloadlink(hash)
+            filepath = 'torrent'
+            if not os.path.exists(filepath):
+                os.mkdir(filepath)
+            r = requests.get(url, stream=True)
+            with open(os.path.join(filepath, '%s.torrent' % hash), 'wb') as f:
+                for content in r.iter_content(1024):
+                    f.write(content)
+                    f.flush()
+            # 成功后更新数据库
+            sql = 'update caoliu_source set `isdownload`=1 where `hash`=%s'
+            self.mysql_cursor.execute(sql, hash)
+            if self.DEBUG:
+                print '下载完成:%s' % hash
+        except Exception, e:
+            print e
+
+    def thread_download(self):
+        # 获取任务
+        while True:
+            sql = 'select * from caoliu_source where `isdownload`=0 and `hash` is not NULL limit 5'
+            ret = self.mysql_cursor.query(sql)
+            if not ret:
+                time.sleep(10)
+            else:
+                for i in ret:
+                    self.download(i['hash'])
+                    time.sleep(1)
+
+    def thread_mission(self):
+        '''
+        从redis取队列，执行任务
+        :return:
+        '''
+        while True:
+            try:
+                url = self.redis_cursor.lpop(self.pre + 'urllist')
+                if not url:
+                    time.sleep(20)
+                else:
+                    self.scrapylist_onepage(url)
+                    time.sleep(10)
+            except Exception, e:
+                print e
+
     def thread_scrapylist(self):
-        url = 'http://www.t66y.com/thread0806.php?fid=15&search=&page=%s'
-        for i in xrange(1323):
-            self.scrapylist_onepage(url % i)
-            time.sleep(10)
+        '''
+        爬取任务
+        :return:
+        '''
+        # TODO 爬取页数
+        maxpage = 1500
+        while True:
+            try:
+                r = self._get('http://www.t66y.com/thread0806.php?fid=15')
+                root = etree.HTML(r.text)
+                maxpage = root.xpath('.//div[@class="pages"]/a/input/@value')
+                if maxpage:
+                    maxpage = int(maxpage[0].split('/')[1])
+            except Exception, e:
+                print e
+
+            url = 'http://www.t66y.com/thread0806.php?fid=15&search=&page=%s'
+            for i in xrange(maxpage):
+                self.scrapylist_onepage(url % i)
+            time.sleep(60*60)
 
     def thread_scrapycodeauto(self):
         '''
@@ -268,78 +376,12 @@ class CaoLiu(object):
                 print e
             time.sleep(5)
 
-    def scrapycode(self, url):
+    def thread_downfilm(self):
         '''
-        爬区信息页面，获取种子和图片
-        :param url:
+        TODO
         :return:
         '''
-        r = self._get(url)
-        r.encoding = 'gbk'
-        regx = re.compile(r'hash=([0-9a-z]+)')
-        hashlist = regx.findall(r.text)
-        if not hashlist:
-            print '没有找到hash'
-            try:
-                sql = 'update caoliu_source set `hash`=%s where `url`=%s'
-                self.mysql_cursor.execute(sql, 'none', url)
-            except Exception, e:
-                print e
-        else:
-            hash = hashlist[0]
-            link = 'http://www.rmdown.com/link.php?hash=%s' % hash
-            # TODO 更新数据库
-            try:
-                sql = 'update caoliu_source set `hash`=%s where `url`=%s'
-                self.mysql_cursor.execute(sql, hash, url)
-            except Exception, e:
-                print e
-
-    @classmethod
-    def downloadlink(cls, hash):
-        '''
-        获取实时种子下载链接
-        :param hash:
-        :return:
-        '''
-        return 'http://www.rmdown.com/download.php?ref=%s&reff=%s&submit=download' % (
-        hash, b64encode(str(int(time.time()))))
-
-    def download(self, hash):
-        '''
-        下载种子
-        :param hash:
-        :return:
-        '''
-        try:
-            url = self.downloadlink(hash)
-            filepath = 'torrent'
-            if not os.path.exists(filepath):
-                os.mkdir(filepath)
-            r = requests.get(url, stream=True)
-            with open(os.path.join(filepath, '%s.torrent' % hash), 'wb') as f:
-                for content in r.iter_content(1024):
-                    f.write(content)
-                    f.flush()
-            #成功后更新数据库
-            sql = 'update caoliu_source set `isdownload`=1 where `hash`=%s'
-            self.mysql_cursor.execute(sql, hash)
-            if self.DEBUG:
-                print '下载完成:%s' % hash
-        except Exception, e:
-            print e
-
-    def thread_download(self):
-        #获取任务
-        while True:
-            sql = 'select * from caoliu_source where `isdownload`=0 and `hash` is not NULL limit 5'
-            ret = self.mysql_cursor.query(sql)
-            if not ret:
-                time.sleep(10)
-            else:
-                for i in ret:
-                    self.download(i['hash'])
-                    time.sleep(1)
+        pass
 
     @catchKeyboardInterrupt
     def run(self):
