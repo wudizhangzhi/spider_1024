@@ -404,14 +404,16 @@ class CaoLiu(object):
             r = requests.get(url, stream=True, timeout=30)
             filename = url.split('/')[-1]
             print '文件：%s, 大小：%s MB' % (filename, float(r.headers['Content-Length'])/1024/128) # 1byte=8bit 1kb=1024bit
+            logger.error('文件：%s, 大小：%s MB' % (filename, float(r.headers['Content-Length'])/1024/128))
             with open(os.path.join(filepath, filename), 'wb') as f:
                 for content in r.iter_content(1024):
                     f.write(content)
                     f.flush()
             print '下载完成：%s' % filename
+            logger.error('下载完成：%s' % filename)
         except Exception, e:
             print e
-            logging.error(e)
+            logger.error(e)
 
     def thread_downvideo(self):
         '''
@@ -452,7 +454,7 @@ class CaoLiu(object):
                     title = title[0]
                     href = href[0]
                     href = 'http://www.t66y.com/' + href
-                    print title, href
+                    # print title, href
                     self.redis_cursor.rpush(self.pre + 'video', href)
             except Exception, e:
                 print e
@@ -501,7 +503,7 @@ class CaoLiu(object):
 if __name__ == '__main__':
     # CONF_LOG = "caoliu.conf"
     # logging.config.fileConfig(CONF_LOG)   # 采用配置文件
-    logging.basicConfig(level=logging.DEBUG,
+    logging.basicConfig(level=logging.ERROR,
                     format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
                     datefmt='%a, %d %b %Y %H:%M:%S',
                     filename='log/caoliu.log',
