@@ -105,7 +105,7 @@ class CaoLiu(object):
         self._initDB()
 
     def _initDB(self):
-        self.mysql_cursor = torndb.Connection(host='localhost', user='root', password='admin', database='caoliu')
+        self.mysql_cursor = torndb.Connection(host='localhost', user='root', password='13961000804', database='caoliu')
         pool = redis.ConnectionPool(host='127.0.0.1', port=6379)
         self.redis_cursor = redis.Redis(pool)
 
@@ -391,12 +391,89 @@ class CaoLiu(object):
                 logging.error(e)
             time.sleep(5)
 
-    def thread_downfilm(self):
+    def downloadvideo(self, url):
         '''
-        TODO
+        下载视频
+        :param hash:
         :return:
         '''
-        pass
+        try:
+            filepath = 'video'
+            if not os.path.exists(filepath):
+                os.mkdir(filepath)
+            r = requests.get(url, stream=True, timeout=30)
+            filename = url.split('/')[-1]
+            print '文件：%s, 大小：%s MB' % (filename, float(r.headers['Content-Length'])/1024/128) # 1byte=8bit 1kb=1024bit
+            with open(os.path.join(filepath, filename), 'wb') as f:
+                for content in r.iter_content(1024):
+                    f.write(content)
+                    f.flush()
+            print '下载完成：%s' % filename
+        except Exception, e:
+            print e
+            logging.error(e)
+
+    def thread_downvideo(self):
+        '''
+        :return:
+        '''
+        while True:
+            ret = self.redis_cursor.lpop(self.pre + 'video')
+            if not ret:
+                print '没有可以下载的视频'
+                time.sleep(60)
+            else:
+                #查询是否有网址
+                r = self._get(ret)
+                re.findall(r'(http\://media\.fcw\.xxx/videos/\d+/\d+/\d+/[a-z]+/[a-z]+/[a-zA-Z0-9]\.mp4)', r.text)
+                if not ret:
+                    pass
+                else:
+                    self.downloadvideo(ret[0])
+
+    def thread_scapyvideo_onepage(self, url):
+        try:
+            r = self._get(url)
+        except Exception, e:
+            print e
+            logging.error(e)
+            return False
+        r.encoding = 'gbk'
+        root = etree.HTML(r.text)
+        lines = root.xpath('//h3/a[starts-with(@href, "htm_data")]')
+        if not lines:
+            logging.error('该列表页面找不到内容内容:%s' % url)
+            return False
+        for line in lines:
+            try:
+                title = line.xpath('./text()')  # 标题
+                href = line.xpath('./@href')  # 内容页面链接
+                if title and href:
+                    title = title[0]
+                    href = href[0]
+                    print title, href
+                    self.redis_cursor.rpush(self.pre + 'video', href)
+            except Exception, e:
+                print e
+                logging.error(e)
+
+    def thread_scapyvideo(self):
+        maxpage = 1500
+        while True:
+            try:
+                r = self._get('http://www.t66y.com/thread0806.php?fid=22')
+                root = etree.HTML(r.text)
+                maxpage = root.xpath('.//div[@class="pages"]/a/input/@value')
+                if maxpage:
+                    maxpage = int(maxpage[0].split('/')[1])
+            except Exception, e:
+                print e
+                logging.error(e)
+
+            url = 'http://www.t66y.com/thread0806.php?fid=22&page=%s'
+            for i in xrange(maxpage):
+                self.thread_scapyvideo_onepage(url % i)
+            time.sleep(60*60)
 
     @catchKeyboardInterrupt
     def run(self):
@@ -404,6 +481,8 @@ class CaoLiu(object):
             'scrapylist': self.thread_scrapylist, # 爬取列表
             'scrapycode': self.thread_scrapycodeauto, # 爬取下载的hash
             'download_torrent': self.thread_download, # 下载种子
+            'download_video': self.thread_downvideo, # 下载种子
+            'scrapy_video': self.thread_scapyvideo, # 下载种子
         }
         for i in threads.itervalues():
             listenProcess = multiprocessing.Process(target=i)
