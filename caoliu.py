@@ -391,7 +391,7 @@ class CaoLiu(object):
                 logging.error(e)
             time.sleep(5)
 
-    def downloadvideo(self, url):
+    def downloadvideo(self, url, title=None):
         '''
         下载视频
         :param hash:
@@ -402,7 +402,10 @@ class CaoLiu(object):
             if not os.path.exists(filepath):
                 os.mkdir(filepath)
             r = requests.get(url, stream=True, timeout=30)
-            filename = url.split('/')[-1]
+            if title:
+                filename = '%s.mp4' % title
+            else:
+                filename = url.split('/')[-1]
             print '文件：%s, 大小：%s MB' % (filename, float(r.headers['Content-Length'])/1024/128) # 1byte=8bit 1kb=1024bit
             logger.error('文件：%s, 大小：%s MB' % (filename, float(r.headers['Content-Length'])/1024/128))
             with open(os.path.join(filepath, filename), 'wb') as f:
@@ -425,7 +428,9 @@ class CaoLiu(object):
                 print '没有可以下载的视频'
                 time.sleep(60)
             else:
-                self.downloadvideo(ret)
+                url = ret.split('|')[0]
+                title = ret.split('|')[1]
+                self.downloadvideo(url, title=title)
 
     def thread_scapyvideo_onepage(self, url):
         try:
@@ -447,16 +452,20 @@ class CaoLiu(object):
                 if title and href:
                     title = title[0]
                     href = href[0]
-                    href = 'http://www.t66y.com/' + href
+                    href = 'http://t66y.com/' + href
                     # print title, href
                     # self.redis_cursor.rpush(self.pre + 'video', href)
-                    r = self._get(url)
+                    r = self._get(href)
                     m = re.findall('(http://www\.fcw\.xxx/embed/\d+)', r.text)
                     if m:
+                        print m[0]
                         r = self._get(m[0])
-                        m = re.findall(r'(http\://media\.fcw\.xxx/videos/\d+/\d+/\d+/[a-z]+/[a-z]+/[a-zA-Z0-9]\.mp4)', r.text)
-                        if m:
-                            self.redis_cursor.rpush(self.pre + 'video', m[0])
+                        root = etree.HTML(r.text)
+                        ret = root.xpath('.//source[@type="video/mp4"]/@src') #视频地址
+                        # m = re.findall(r'(http\://media\.fcw\.xxx/videos/\d+/\d+/\d+/[a-z]+/[a-z]+/[a-zA-Z0-9]\.mp4)', r.text)
+                        if ret:
+                            print title
+                            self.redis_cursor.rpush(self.pre + 'video', '%s|%s' % (ret[0], title))
 
             except Exception, e:
                 print e
@@ -486,8 +495,8 @@ class CaoLiu(object):
             'scrapylist': self.thread_scrapylist, # 爬取列表
             'scrapycode': self.thread_scrapycodeauto, # 爬取下载的hash
             'download_torrent': self.thread_download, # 下载种子
-            'download_video': self.thread_downvideo, # 下载种子
-            'scrapy_video': self.thread_scapyvideo, # 下载种子
+            'download_video': self.thread_downvideo, # 下载视频
+            'scrapy_video': self.thread_scapyvideo, # 爬取视频地址
         }
         for i in threads.itervalues():
             listenProcess = multiprocessing.Process(target=i)
