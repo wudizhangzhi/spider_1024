@@ -17,6 +17,7 @@ import logging
 import logging.config
 import redis
 import chardet
+import coloredlogs
 
 '''
 #获取页面的链接
@@ -103,6 +104,17 @@ class CaoLiu(object):
             # 'Accept-Encoding': 'gzip, deflate'
         }
         self._initDB()
+        #初始化loger
+        self._initLog()
+
+    def _initLog(self):
+        logging.basicConfig(level=logging.ERROR,
+                    format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
+                    datefmt='%a, %d %b %Y %H:%M:%S',
+                    filename='log/caoliu.log',
+                    filemode='w')
+        logger = logging.getLogger(__name__)
+        coloredlogs.install(level='DEBUG')
 
     def _initDB(self):
         self.mysql_cursor = torndb.Connection(host='localhost', user='root', password='admin', database='caoliu')
@@ -516,15 +528,7 @@ class CaoLiu(object):
 if __name__ == '__main__':
     # CONF_LOG = "caoliu.conf"
     # logging.config.fileConfig(CONF_LOG)   # 采用配置文件
-    logging.basicConfig(level=logging.ERROR,
-                    format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
-                    datefmt='%a, %d %b %Y %H:%M:%S',
-                    filename='log/caoliu.log',
-                    filemode='w')
-    logger = logging.getLogger(__name__)
-    import coloredlogs
 
-    coloredlogs.install(level='DEBUG')
     caoliu = CaoLiu()
     # caoliu.scrapylist_onepage('http://www.t66y.com/thread0806.php?fid=15&search=&page=0')
     # print caoliu.findfanhao('[MP4/952M]JUX-343 あなたへ 今�、ゆきこの家に泊まります。 森ななこ【中文字幕】')
