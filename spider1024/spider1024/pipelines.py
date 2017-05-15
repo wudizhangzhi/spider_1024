@@ -80,7 +80,7 @@ class SaveItemPipeline(object):
 
     def addVideoData(self, item):
         sql = """
-            INSERT into `bilibili_bilivideodata`(`aid_id`,`view`,`danmaku`,
+            INSERT into `bilibili_bilivideodata`(`video_id`,`view`,`danmaku`,
             `reply`,`favorite`,`coin`,`share`,`createtime`)
             values(%s,%s,%s,%s,%s,%s,%s,%s)
         """
@@ -88,7 +88,7 @@ class SaveItemPipeline(object):
         item['reply'], item['favorite'], item['coin'], item['share'], datetime.datetime.now())
 
     def saveVideo(self, item):
-        sql = 'insert into `bilibili_bilivideo`(`aid`,`mid_id`,`url`,`title`\
+        sql = 'insert into `bilibili_bilivideo`(`aid`,`uper_id`,`url`,`title`\
         , `createtime`, `addtime`, `vdesc`)\
          values(%s,%s,%s,%s,%s,%s,%s)'
         self.mysql_cursor.execute(sql, item['aid'], item['mid'], item['url'],
@@ -117,7 +117,7 @@ class SaveItemPipeline(object):
 
     def saveTagdata(self, item):
         sql = """
-            INSERT into `bilibili_bilitagdata`(`tagid_id`,`use`,`atten`,
+            INSERT into `bilibili_bilitagdata`(`tag_id`,`use`,`atten`,
             `is_atten`,`likes`,`hates`,`attribute`,`liked`,`hated`,`createtime`)
             values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
         """
@@ -189,7 +189,7 @@ class SaveItemPipeline(object):
     def crawlUser(self, uid):
         try:
             url_uper = 'http://api.bilibili.com/cardrich?&mid=%s&type=jsonp&_=%s' % (uid, int(time.time()*1000))
-            r = requests.get(url_uper)
+            r = requests.get(url_uper, timeout=10)
             j = json.loads(r.text)
             data = j['data']['card']
             if not self.UperExists(uid):
@@ -202,7 +202,7 @@ class SaveItemPipeline(object):
 
     def addUperData(self, data):
         sql = """
-            INSERT into `bilibili_biliuperdata`(`uid_id`,`videonum`,`gz`,
+            INSERT into `bilibili_biliuperdata`(`uper_id`,`videonum`,`gz`,
             `fans`, `play`,`createtime`) values(%s,%s,%s,%s,%s,%s)
         """
         # self.mysql_cursor.execute(sql, data['mid'], data['videonum'],
@@ -225,3 +225,19 @@ class SaveItemPipeline(object):
         data['sign'],
         time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(data['regtime'])),
         datetime.datetime.now(), data['face'])
+
+    def crawlVideo(self, aid):
+        # 访问视频接口获取视频数据
+        item = dict()
+        url_videdata = 'http://api.bilibili.com/archive_stat/stat?aid=%s&type=jsonp&_=%s' % (aid, int(time.time()*1000))
+        r = requests.get(url_videdata, timeout=5)
+        j = json.loads(r.text)
+        data = j['data']
+        item['view'] = data['view']
+        item['danmaku'] = data['danmaku']
+        item['reply'] = data['reply']
+        item['favorite'] = data['favorite']
+        item['coin'] = data['coin']
+        item['share'] = data['share']
+        item['aid'] = aid
+        self.addVideoData(item)
