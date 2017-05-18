@@ -22,7 +22,8 @@ class BiLiSpider(CrawlSpider):
     rules = [
         Rule(LinkExtractor(allow=('http://www.bilibili.com/[a-z]+/[a-z0-9\-\_]+\.html', )), follow=True),
         Rule(LinkExtractor(allow=('/?video/av[0-9]+/$', )), callback='parse_videoitem', follow=True),
-        # Rule(LinkExtractor(allow=('bilibili.com/.*',))),
+        Rule(LinkExtractor(allow=('www.bilibili.com/video/av[0-9]+/$', )), callback='parse_videoitem', follow=True),
+        Rule(LinkExtractor(allow=('bangumi.bilibili.com/[a-z0-9]*',)), , follow=True),
         Rule(LinkExtractor(allow=('http://space.bilibili.com/[0-9]+/?', )), follow=True),
 
     ]
