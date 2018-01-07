@@ -1,0 +1,9 @@
+dist
+LeetCodeCrawler.egg-info
+MANIFEST
+*.pyc
+.DS_Store
+*.log
+*.txt
+.idea
+*.mp4

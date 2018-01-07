@@ -84,7 +84,7 @@ def download(url, filename=None, printprogress=True):
     if not os.path.exists(dirpath):
         os.mkdir(dirpath)
     if os.path.exists(filename):
-        raise Exception('已经存在')
+        raise Exception('已经存在: {}'.format(filename))
     headers = {'User-Agent': generate_user_agent(os=('mac', 'linux'))}
     r = requests.get(url, headers=headers, stream=True)
     content_length = int(r.headers.get('Content-Length'))
@@ -106,6 +106,8 @@ def download(url, filename=None, printprogress=True):
         print('下载成功: {}'.format(filename))
     else:
         print('下载不完整: {}'.format(filename))
+        if downloaded < 1048576:
+            os.remove(filename)
 
 
 def get_video_download_link(url):
@@ -153,8 +155,11 @@ def main(**kwargs):
         else:
             recent = 'recent/'
         for title, url, thumb in get_all_video_from_url(url.format(module=_module, recent=recent, page=page)):
-            download_link = get_video_download_link(''.join((HOST, url)))
-            download(download_link, 'videos/{}.mp4'.format(title))
+            try:
+                download_link = get_video_download_link(''.join((HOST, url)))
+                download(download_link, 'videos/{}.mp4'.format(title))
+            except Exception as e:
+                print(e)
 
 
 if __name__ == '__main__':
