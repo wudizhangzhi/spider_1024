@@ -141,8 +141,8 @@ def get_all_download_link(url):
 
 def main(**kwargs):
     _module = kwargs.get('module', None)
-    page = int(kwargs.get('page', 1))
-    num = int(kwargs.get('num', 1))
+    page = int(kwargs.get('page', 1) or 1)
+    num = int(kwargs.get('num', 1) or 1)
     if not _module:
         _module = 'guochan'
 
