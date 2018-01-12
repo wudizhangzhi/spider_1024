@@ -147,14 +147,14 @@ def main(**kwargs):
         _module = 'guochan'
 
     # 爬取每一页
-    url = 'http://www.avtb008.com/{module}/{recent}{page}/'
+    url = 'http://www.avtb008.com/{module}/{page}/'
     for page in range(page, page + num):
         # 下载每一个
         if page == 1:
-            recent = ''
+            page = ''
         else:
-            recent = 'recent/'
-        for title, url, thumb in get_all_video_from_url(url.format(module=_module, recent=recent, page=page)):
+            page = 'recent/{}/'.format(page)
+        for title, url, thumb in get_all_video_from_url(url.format(module=_module, page=page)):
             try:
                 download_link = get_video_download_link(''.join((HOST, url)))
                 download(download_link, 'videos/{}.mp4'.format(title))
