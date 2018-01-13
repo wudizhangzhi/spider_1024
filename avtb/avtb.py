@@ -1,7 +1,7 @@
 """AVTB.
 
 Usage:
-  avtb.py [-m MODULE] [-p PAGE] [-n NUM]
+  avtb.py [-m MODULE] [-p PAGE] [-n NUM] [-o FILE]
   avtb.py (-h | --help)
   avtb.py --version
 
@@ -11,6 +11,7 @@ Options:
   -m MODULE --module=MODULE select module [default: guochan].
   -p PAGE --page=PAGE page to be crawl [default: 1].
   -n NUM --num=NUM page count [default: 1].
+  -o FILE --output FILE output filename.
 """
 
 import os
@@ -139,10 +140,17 @@ def get_all_download_link(url):
     print('结束')
 
 
+def add_one_line_to_file(filename, line):
+    with open(filename, 'a') as f:
+        f.write(line + '\n')
+        print('Add {line} to {filename}'.format(line=line, filename=filename))
+
+
 def main(**kwargs):
     _module = kwargs.get('module', None)
     page = int(kwargs.get('page', 1) or 1)
     num = int(kwargs.get('num', 1) or 1)
+    output = kwargs.get('output', None)
     if not _module:
         _module = 'guochan'
 
@@ -157,7 +165,10 @@ def main(**kwargs):
         for title, url, thumb in get_all_video_from_url(url.format(module=_module, page=page)):
             try:
                 download_link = get_video_download_link(''.join((HOST, url)))
-                download(download_link, 'videos/{}.mp4'.format(title))
+                if output:
+                    add_one_line_to_file(output, download_link)
+                else:
+                    download(download_link, 'videos/{}.mp4'.format(title))
             except Exception as e:
                 print(e)
 
