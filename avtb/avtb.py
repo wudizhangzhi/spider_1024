@@ -16,11 +16,11 @@ Options:
 
 import os
 import re
-from docopt import docopt
+# from docopt import docopt
 import requests
 import time
 from lxml import etree
-from user_agent import generate_user_agent
+# from user_agent import generate_user_agent
 
 TIMEOUT = 10
 HOST = 'http://www.avtb008.com'
@@ -86,7 +86,7 @@ def download(url, filename=None, printprogress=True):
         os.mkdir(dirpath)
     if os.path.exists(filename):
         raise Exception('已经存在: {}'.format(filename))
-    headers = {'User-Agent': generate_user_agent(os=('mac', 'linux'))}
+    headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2905.39 Safari/537.36'}
     r = requests.get(url, headers=headers, stream=True)
     content_length = int(r.headers.get('Content-Length'))
     assert content_length > 1048576  # 1024 * 1024
@@ -154,6 +154,7 @@ def main(**kwargs):
     if not _module:
         _module = 'guochan'
 
+    print(page)
     # 爬取每一页
     url = 'http://www.avtb008.com/{module}/{page}/'
     for page in range(page, page + num):
